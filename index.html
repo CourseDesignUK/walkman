@@ -107,6 +107,13 @@
             for(let i=0; i<15; i++) bars.appendChild(document.createElement('div')).className = 'vdu-seg';
         });
 
+        function saveState(index) {
+            if (tracks.length > 0) {
+                localStorage.setItem('lastAlbum', mixtapeLabel.innerText);
+                localStorage.setItem('lastTrackIdx', index);
+            }
+        }
+
         function updateTapeSize(percent) {
             tapeL.style.width = tapeL.style.height = `${100 - (percent * 0.6)}%`;
             tapeR.style.width = tapeR.style.height = `${40 + (percent * 0.6)}%`;
@@ -129,10 +136,8 @@
         };
 
         async function requestWakeLock() {
-            if ('wakeLock' in navigator) {
-                try {
-                    wakeLockSentinel = await navigator.wakeLock.request('screen');
-                } catch (err) {}
+            if ('wakeLock' in navigator && !wakeLockSentinel) {
+                try { wakeLockSentinel = await navigator.wakeLock.request('screen'); } catch (err) {}
             }
         }
 
@@ -171,14 +176,10 @@
                     album: mixtapeLabel.innerText
                 });
                 
-                const actions = [
-                    ['play', () => document.getElementById('play').click()],
-                    ['pause', () => document.getElementById('stop').click()],
-                    ['previoustrack', () => skip(-1)],
-                    ['nexttrack', () => skip(1)],
-                    ['seekto', (details) => { if (details.seekTime) player.currentTime = details.seekTime; }]
-                ];
-                actions.forEach(([action, handler]) => navigator.mediaSession.setActionHandler(action, handler));
+                navigator.mediaSession.setActionHandler('play', () => document.getElementById('play').click());
+                navigator.mediaSession.setActionHandler('pause', () => document.getElementById('stop').click());
+                navigator.mediaSession.setActionHandler('previoustrack', () => skip(-1));
+                navigator.mediaSession.setActionHandler('nexttrack', () => skip(1));
             }
         }
 
@@ -191,9 +192,11 @@
         };
 
         function loadTrack(i) {
+            if (!tracks[i]) return;
             player.src = URL.createObjectURL(tracks[i]);
             document.getElementById('lcd-name').innerText = tracks[i].name;
             document.getElementById('lcd-index').innerText = `TAPE ${i+1}/${tracks.length}`;
+            saveState(i);
             updateMediaSession();
         }
 
@@ -241,10 +244,22 @@
             if (dolbyFilter) dolbyFilter.frequency.value = isDolbyOn ? 3000 : 20000;
         };
 
+        // Recovery on Init
+        window.onload = () => {
+            const lastAlbum = localStorage.getItem('lastAlbum');
+            const lastIdx = localStorage.getItem('lastTrackIdx');
+            if (lastAlbum) {
+                mixtapeLabel.innerText = lastAlbum;
+                document.getElementById('lcd-name').innerText = "RE-LOAD FOLDER";
+            }
+        };
+
         document.addEventListener("visibilitychange", async () => {
-            if (document.visibilityState === "visible" && !player.paused) {
-                if (audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
-                await requestWakeLock();
+            if (document.visibilityState === "visible") {
+                if (player && !player.paused) {
+                    if (audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
+                    await requestWakeLock();
+                }
             }
         });
     </script>
