@@ -1,12 +1,12 @@
 {
-  "name": "Walkman WM-2 Quartz",
-  "short_name": "Walkman",
-  "description": "Retro XR Audio Labs Mixtape Player",
-  "start_url": "./index.html",
+  "name": "XR Audio Pro",
+  "short_name": "XR Audio",
+  "description": "High-fidelity virtual walkman with background audio persistence.",
+  "start_url": "index.html",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0f0f0f",
   "theme_color": "#222222",
-  "orientation": "portrait",
   "icons": [
     {
       "src": "audio.png",
@@ -19,6 +19,13 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "categories": ["music", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Play/Pause",
+      "url": "/?action=play"
     }
   ]
 }
