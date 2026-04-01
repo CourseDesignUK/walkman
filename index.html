@@ -3,12 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="audio.png">
-
     <title>XR Audio Pro</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
@@ -18,14 +15,14 @@
             --orange-led: #ff4d00; --tape-color: #1a1a1a; --label-bg: rgba(230, 226, 207, 0.85);
         }
         body { background-color: #0f0f0f; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: 'Courier New', Courier, monospace; overflow: hidden; user-select: none; }
-        .walkman-wm2 { height: 92vh; width: 95vw; max-width: 420px; aspect-ratio: 10 / 16; background-color: var(--wm-body); border-radius: 8px; position: relative; box-shadow: 0 40px 80px rgba(0,0,0,0.8); border: 1px solid #000; display: flex; flex-direction: column; margin: auto; }
+        .walkman-wm2 { height: 92vh; width: 95vw; max-width: 420px; aspect-ratio: 10 / 16; background-color: var(--wm-body); border-radius: 8px; position: relative; box-shadow: 0 40px 80px rgba(0,0,0,0.8); border: 1px solid #000; display: flex; flex-direction: column; }
         .top-deck { height: 10%; background: #1a1a1a; border-bottom: 2px solid #000; display: flex; align-items: center; padding: 0 20px; justify-content: space-between; }
         .logo-w { color: #888; font-weight: bold; font-size: 2.2vh; letter-spacing: -1px; font-family: sans-serif;}
         .window-frame { width: 82%; height: 32%; background: var(--wm-glass); margin: 20px auto 10px auto; border: 4px solid #111; border-radius: 2px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: inset 0 0 40px #000; overflow: hidden; position: relative; }
-        .mixtape-sticker { width: 85%; background: var(--label-bg); padding: 4px 0; font-family: 'Permanent Marker', cursive; color: #222; font-size: 1.6vh; text-align: center; border-radius: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; z-index: 10; position: absolute; top: 15%; border: 1px solid rgba(0,0,0,0.1); }
+        .mixtape-sticker { width: 85%; background: var(--label-bg); padding: 4px 0; font-family: 'Permanent Marker', cursive; color: #222; font-size: 1.6vh; text-align: center; border-radius: 1px; z-index: 10; position: absolute; top: 15%; border: 1px solid rgba(0,0,0,0.1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .reels-wrapper { width: 100%; display: flex; justify-content: space-around; align-items: center; margin-top: 15%; }
         .reel-container { width: 32%; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; position: relative; }
-        .tape-mass { position: absolute; background: var(--tape-color); border-radius: 50%; border: 1px solid #222; width: 100%; height: 100%; transition: width 0.5s linear, height 0.5s linear; }
+        .tape-mass { position: absolute; background: var(--tape-color); border-radius: 50%; border: 1px solid #222; width: 100%; height: 100%; }
         .reel-hub { width: 35%; height: 35%; background: #000; border-radius: 50%; border: 2px dashed #444; z-index: 2; display: flex; align-items: center; justify-content: center; }
         .reel-hub::after { content: ''; width: 30%; height: 30%; background: #222; transform: rotate(45deg); }
         .spinning { animation: rotate 3s linear infinite; }
@@ -48,7 +45,6 @@
         #dolby-switch.active .switch-handle { left: 50%; background: #555; }
         .button-cluster { position: absolute; bottom: 4%; right: 5%; width: 55%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .wm2-btn { background: #2a2a2a; border: 1px solid #000; color: #666; padding: 12px 0; font-size: 1vh; font-weight: bold; cursor: pointer; }
-        .wm2-btn:active { transform: translateY(1px); background: #1a1a1a; }
         .play-btn { grid-column: span 2; background: #333; color: #eee; height: 7vh; font-size: 1.6vh;}
         .load-btn { position: absolute; bottom: 4%; left: 5%; width: 30%; height: 5vh; background: #5e1919; color: #ccc; font-size: 1vh; font-weight: bold; border: none; cursor: pointer; }
         .led { width: 8px; height: 8px; background: #1a0808; border-radius: 50%; }
@@ -56,7 +52,6 @@
     </style>
 </head>
 <body>
-
     <div class="walkman-wm2">
         <div class="top-deck">
             <div class="logo-w">XR Audio Labs <span style="font-weight: 100; font-size: 1.3vh;">WM-2 QUARTZ</span></div>
@@ -103,7 +98,6 @@
         let audioCtx, analyser, dataArray, dolbyFilter, tracks = [], isDolbyOn = false;
         let wakeLockSentinel = null;
 
-        // VDU Setup
         const vduPanel = document.getElementById('vdu-panel');
         ['L','R'].forEach(label => {
             const row = document.createElement('div'); row.className = 'vdu-row';
@@ -124,54 +118,35 @@
             const percent = (player.currentTime / player.duration) || 0;
             lcdBar.style.width = (percent * 100) + "%";
             updateTapeSize(percent * 100);
+            
+            if ('mediaSession' in navigator && player.duration) {
+                navigator.mediaSession.setPositionState({
+                    duration: player.duration,
+                    playbackRate: player.playbackRate,
+                    position: player.currentTime
+                });
+            }
         };
 
-        // ENHANCED: Wake Lock API to prevent screen sleep
         async function requestWakeLock() {
             if ('wakeLock' in navigator) {
                 try {
                     wakeLockSentinel = await navigator.wakeLock.request('screen');
-                    console.log('Wake Lock active');
-                    wakeLockSentinel.addEventListener('release', () => {
-                        console.log('Wake Lock released');
-                    });
-                } catch (err) {
-                    console.log('Wake Lock error:', err);
-                }
+                } catch (err) {}
             }
         }
 
-        function releaseWakeLock() {
-            if (wakeLockSentinel) {
-                wakeLockSentinel.release();
-                wakeLockSentinel = null;
-            }
-        }
-
-        // ENHANCED: Audio context setup with silent oscillator
         function setupAudioNodes() {
             if (audioCtx) return;
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            
-            // Silent oscillator to keep audio hardware active
-            const oscillator = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            gain.gain.value = 0.00001; // Nearly inaudible
-            oscillator.connect(gain);
-            gain.connect(audioCtx.destination);
-            oscillator.start();
-
             analyser = audioCtx.createAnalyser();
             const source = audioCtx.createMediaElementSource(player);
-            
             dolbyFilter = audioCtx.createBiquadFilter();
             dolbyFilter.type = "lowpass";
             dolbyFilter.frequency.value = isDolbyOn ? 3000 : 20000;
-            
             source.connect(dolbyFilter);
             dolbyFilter.connect(analyser);
             analyser.connect(audioCtx.destination);
-            
             analyser.fftSize = 64;
             dataArray = new Uint8Array(analyser.frequencyBinCount);
             draw();
@@ -179,7 +154,7 @@
 
         function draw() {
             requestAnimationFrame(draw);
-            if (!analyser || player.paused) return;
+            if (!analyser || player.paused || document.hidden) return;
             analyser.getByteFrequencyData(dataArray);
             ['l','r'].forEach((id, idx) => {
                 const segs = document.getElementById(`vdu-${id}`).children;
@@ -188,59 +163,22 @@
             });
         }
 
-        // ENHANCED: Media Session API with all handlers
         function updateMediaSession() {
             if ('mediaSession' in navigator && tracks.length > 0) {
-                const currentName = document.getElementById('lcd-name').innerText;
                 navigator.mediaSession.metadata = new MediaMetadata({
-                    title: currentName, 
-                    artist: "XR Audio Labs", 
-                    album: mixtapeLabel.innerText,
-                    artwork: [
-                        { src: 'audio.png', sizes: '96x96', type: 'image/png' },
-                        { src: 'audio.png', sizes: '128x128', type: 'image/png' },
-                        { src: 'audio.png', sizes: '192x192', type: 'image/png' },
-                        { src: 'audio.png', sizes: '256x256', type: 'image/png' },
-                        { src: 'audio.png', sizes: '384x384', type: 'image/png' },
-                        { src: 'audio.png', sizes: '512x512', type: 'image/png' }
-                    ]
+                    title: document.getElementById('lcd-name').innerText,
+                    artist: "XR Audio Labs",
+                    album: mixtapeLabel.innerText
                 });
                 
-                // Set all possible action handlers
-                navigator.mediaSession.setActionHandler('play', () => {
-                    player.play();
-                    navigator.mediaSession.playbackState = 'playing';
-                });
-                navigator.mediaSession.setActionHandler('pause', () => {
-                    player.pause();
-                    navigator.mediaSession.playbackState = 'paused';
-                });
-                navigator.mediaSession.setActionHandler('stop', () => {
-                    player.pause();
-                    navigator.mediaSession.playbackState = 'paused';
-                });
-                navigator.mediaSession.setActionHandler('previoustrack', () => skip(-1));
-                navigator.mediaSession.setActionHandler('nexttrack', () => skip(1));
-                navigator.mediaSession.setActionHandler('seekbackward', () => {
-                    player.currentTime = Math.max(0, player.currentTime - 10);
-                });
-                navigator.mediaSession.setActionHandler('seekforward', () => {
-                    player.currentTime = Math.min(player.duration, player.currentTime + 10);
-                });
-                navigator.mediaSession.setActionHandler('seekto', (details) => {
-                    if (details.seekTime) player.currentTime = details.seekTime;
-                });
-
-                // Update position state for lock screen
-                if ('setPositionState' in navigator.mediaSession) {
-                    player.addEventListener('loadedmetadata', () => {
-                        navigator.mediaSession.setPositionState({
-                            duration: player.duration,
-                            playbackRate: player.playbackRate,
-                            position: player.currentTime
-                        });
-                    });
-                }
+                const actions = [
+                    ['play', () => document.getElementById('play').click()],
+                    ['pause', () => document.getElementById('stop').click()],
+                    ['previoustrack', () => skip(-1)],
+                    ['nexttrack', () => skip(1)],
+                    ['seekto', (details) => { if (details.seekTime) player.currentTime = details.seekTime; }]
+                ];
+                actions.forEach(([action, handler]) => navigator.mediaSession.setActionHandler(action, handler));
             }
         }
 
@@ -256,27 +194,18 @@
             player.src = URL.createObjectURL(tracks[i]);
             document.getElementById('lcd-name').innerText = tracks[i].name;
             document.getElementById('lcd-index').innerText = `TAPE ${i+1}/${tracks.length}`;
-            updateTapeSize(0);
             updateMediaSession();
         }
 
         document.getElementById('play').onclick = async () => {
             if(!player.src) return;
-            if (!audioCtx) setupAudioNodes();
+            setupAudioNodes();
             if (audioCtx.state === 'suspended') await audioCtx.resume();
-            
-            // Request wake lock when playing
             await requestWakeLock();
-            
             player.play().then(() => {
                 led.classList.add('led-on');
                 hubs.forEach(h => h.className = 'reel-hub spinning');
-                if ('mediaSession' in navigator) {
-                    navigator.mediaSession.playbackState = "playing";
-                }
-            }).catch(e => {
-                console.log("Play blocked: ", e);
-                releaseWakeLock();
+                if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "playing";
             });
         };
 
@@ -284,7 +213,7 @@
             player.pause();
             led.classList.remove('led-on');
             hubs.forEach(h => h.className = 'reel-hub');
-            releaseWakeLock();
+            if (wakeLockSentinel) { wakeLockSentinel.release(); wakeLockSentinel = null; }
             if ('mediaSession' in navigator) navigator.mediaSession.playbackState = "paused";
         };
 
@@ -306,57 +235,18 @@
             hubs.forEach(h => h.className = player.playbackRate > 1.0 ? 'reel-hub spinning-fast' : 'reel-hub spinning');
         };
 
-        // ENHANCED: Multiple visibility/focus handlers
-        document.addEventListener("visibilitychange", async () => {
-            if (document.visibilityState === "visible") {
-                if (!player.paused) {
-                    if (audioCtx && audioCtx.state === 'suspended') {
-                        await audioCtx.resume();
-                    }
-                    // Re-request wake lock when returning to app
-                    await requestWakeLock();
-                }
-            }
-        });
-
-        // Handle page hide/show events (iOS specific)
-        window.addEventListener('pagehide', () => {
-            if (!player.paused && audioCtx) {
-                // Keep context alive
-                audioCtx.resume();
-            }
-        });
-
-        window.addEventListener('pageshow', async () => {
-            if (!player.paused) {
-                if (audioCtx && audioCtx.state === 'suspended') {
-                    await audioCtx.resume();
-                }
-                await requestWakeLock();
-            }
-        });
-
-        // Reacquire wake lock when visibility changes
-        document.addEventListener('visibilitychange', async () => {
-            if (wakeLockSentinel !== null && document.visibilityState === 'visible') {
-                await requestWakeLock();
-            }
-        });
-
-        // Dolby switch
         document.getElementById('dolby-switch').onclick = function() {
             isDolbyOn = !isDolbyOn;
             this.classList.toggle('active');
-            if (dolbyFilter) {
-                dolbyFilter.frequency.value = isDolbyOn ? 3000 : 20000;
-            }
+            if (dolbyFilter) dolbyFilter.frequency.value = isDolbyOn ? 3000 : 20000;
         };
 
-        if ('serviceWorker' in navigator) {
-            const swCode = `self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));`;
-            const blob = new Blob([swCode], {type: 'application/javascript'});
-            navigator.serviceWorker.register(URL.createObjectURL(blob));
-        }
+        document.addEventListener("visibilitychange", async () => {
+            if (document.visibilityState === "visible" && !player.paused) {
+                if (audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
+                await requestWakeLock();
+            }
+        });
     </script>
 </body>
 </html>
